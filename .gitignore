@@ -1,45 +1,34 @@
-# --- Python Basics ---
+# --- Python ---
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
 
 # --- Virtual Environment ---
-# Keeps your library installation local
 venv/
 .env
 
-# --- Data Folders & Files---
-# Never commit raw datasets or temp folders
-raw_data/
+# --- Data ---
+data/
 downloads/
-temp_*/
-train_list.txt
-val_list.txt
-test_list.txt
+raw_data/
 
-# --- Large Files & Zips ---
+# --- Large Files ---
 *.zip
 *.tar.gz
 *.rar
 
 # --- Model Checkpoints ---
-# These are large binary files (weights)
 *.pth
 *.pt
+*.onnx
+models/
 runs/
 
-# --- Inference Results ---
-# Don't commit your test selfies or result images
-result_*.jpg
-result_*.png
-sanity_check.png
-my_selfie.jpg
+# --- Logs ---
+logs/
 
-# --- IDE Settings ---
+# --- IDE ---
 .vscode/
 .idea/
 *.ipynb_checkpoints/
-
-# --- Logs ---
-/logs
