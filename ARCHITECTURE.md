@@ -25,18 +25,23 @@ here should be reflected in code as it is written.
 
 ## 2. Disease Classes
 
-7 canonical classes. Every dataset source must be explicitly remapped to these IDs.
+6 canonical classes. Every dataset source must be explicitly remapped to these IDs.
 No implicit trust of source label integers.
 
-| ID | Class Name         | Notes                                      |
-|----|--------------------|--------------------------------------------|
-| 0  | caries             | Tooth decay / cavities                     |
-| 1  | gingivitis         | Gum inflammation                           |
-| 2  | tooth_discoloration| Staining / discoloration                   |
-| 3  | ulcer              | Includes oral lesions and xerostomia       |
-| 4  | calculus           | Tartar buildup                             |
-| 5  | plaque             | Soft bacterial film                        |
-| 6  | hypodontia         | Missing teeth                              |
+| ID | Class Name          | Notes                                                    |
+|----|---------------------|----------------------------------------------------------|
+| 0  | caries              | Tooth decay / cavities                                   |
+| 1  | gingivitis          | Gum inflammation                                         |
+| 2  | tooth_discoloration | Staining / discoloration                                 |
+| 3  | ulcer               | Includes oral lesions and xerostomia                     |
+| 4  | calculus            | Tartar buildup; also covers plaque (soft bacterial film) |
+| 5  | hypodontia          | Missing teeth                                            |
+
+**Why plaque was merged into calculus:** Plaque is nearly invisible in standard clinical
+photographs without disclosing agents, making it unreliably annotatable from images alone.
+Calculus is mineralized plaque — visually distinct and well-represented in available data.
+The meaningful signal for a photo-based model is "bacterial deposit present." The
+plaque vs. calculus distinction requires tactile examination and is out of scope here.
 
 These IDs are defined in `configs/dataset.yaml` and are the single source of truth.
 
@@ -101,15 +106,14 @@ train: images/train
 val: images/val
 test: images/test
 
-nc: 7
+nc: 6
 names:
   0: caries
   1: gingivitis
   2: tooth_discoloration
   3: ulcer
   4: calculus
-  5: plaque
-  6: hypodontia
+  5: hypodontia
 ```
 
 ### `configs/train.yaml`
