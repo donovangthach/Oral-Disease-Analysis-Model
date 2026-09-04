@@ -112,6 +112,22 @@ SOURCES = {
 SOURCES_DIR = Path("data") / "sources"
 
 
+def seg_to_bbox(parts):
+    """
+    Fixes any segmentation download from Roboflow (wrong YOLOv8 formatting).
+    """
+    coords = [float(c) for c in parts[1:]]          # grab coords as floats
+    xs = coords[0::2]                               # every other value starting at 0 -> x values
+    ys = coords[1::2]                               # every other value starting at 1 -> y values
+
+    x_center = (min(xs) + max(xs)) / 2              # find the center horizontal value
+    y_center = (min(ys) + max(ys)) / 2              # find the center vertical value
+    width    = max(xs) - min(xs)                    # get the dimensions of the bounding box
+    height   = max(ys) - min(ys)
+
+    return f"{parts[0]} {x_center} {y_center} {width} {height}" # return as a new line
+
+
 def remap_source(source_name: str, mapping: dict) -> None:
     """
     Remaps all label files in a single source folder to canonical class IDs.
@@ -142,8 +158,11 @@ def remap_source(source_name: str, mapping: dict) -> None:
         new_lines = []                              # stores new lines made
         for line in lines:
             parts = line.strip().split()            # split the line into strings
-            if not parts:
+            if not parts:                           # skip empty lines
                 continue
+
+            if len(parts) > 5:                      # YOLO format requires 5 columns
+                parts = seg_to_bbox(parts).split()  # reformat parts to match YOLO format
 
             src_id = int(parts[0])                  # make the class ID an int
 
@@ -156,6 +175,12 @@ def remap_source(source_name: str, mapping: dict) -> None:
                 continue                            # skip this line
             else:
                 parts[0] = str(mapping[src_id])     # remap the ID in the file
+
+                coords = [float(x) for x in parts[1:]]  # take the coords of the bbox
+                if not all(0.0 <= c <= 1.0 for c in coords):    # discard any lines with invalid coords
+                    discarded_lines += 1
+                    continue
+
                 new_lines.append(" ".join(parts))   # store the new line
                 remapped_lines += 1
 

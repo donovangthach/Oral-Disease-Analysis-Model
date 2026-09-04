@@ -37,7 +37,7 @@ def main():
             continue
 
         if not (source_dir / ".remapped").exists():             # skip if .remapped file doesn't exist in source folder
-            logging.warning(f"[{source_dir}] has not been remapped, skipping")
+            logging.warning(f"[{source_dir}] has not been remapped, rerun Stage 1, skipping")
             continue
 
         label_files = list(source_dir.rglob("*.txt"))           # use rglob to grab all .txt files
