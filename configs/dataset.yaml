@@ -1,0 +1,13 @@
+path: ../data/processed
+train: train/images
+val: val/images
+test: test/images
+
+nc: 6
+names:
+  0: caries
+  1: gingivitis
+  2: tooth_discoloration
+  3: ulcer
+  4: calculus
+  5: hypodontia
