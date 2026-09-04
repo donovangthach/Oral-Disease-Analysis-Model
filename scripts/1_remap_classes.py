@@ -14,7 +14,8 @@ REMAPPED CLASSES:
 | 5  | hypodontia          |
 |----|---------------------|
 
-DISCARD is used to remove the annotation line from the dataset, but keeps the image as a background/negative example.
+DISCARD is used to remove the annotation line from the dataset, but keeps the image as a 
+background/negative example.
 """
 
 from pathlib import Path
