@@ -32,5 +32,7 @@ def main():
     model = YOLO(BEST_MODEL)
     results = model.predict(source=image_path, show=True)       # runs the model on the image and returns a list of Results objects containing the detected bounding boxes
 
+    logging.info(f"{sum(len(r.boxes) for r in results)} detections found")
+
 if __name__ == "__main__":
     main()
