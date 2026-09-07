@@ -15,7 +15,7 @@ def main():
     """
     model = YOLO("yolo11s.pt")                                  # load YOLOv11s model
 
-    for param in model.model[:10].parameters():                 # freeze the backbone to prevent weights from changing too fast
+    for param in model.model.model[:10].parameters():           # freeze the backbone to prevent weights from changing too fast
         param.requires_grad = False
 
     model.train(data=DATASET_YAML, cfg=TRAIN_YAML)              # train the model on the dataset with the configurations set
