@@ -96,16 +96,112 @@ HYPODONTIA = {
     0: 5,   # hypodotia -> hypodontia
 }
 
+# roboflow: train-gxg2c/gingivitis-qt8us v1
+# data.yaml: gingivitis(0)
+GINGIVITIS_TRAIN = {
+    0: 1,   # gingivitis -> gingivitis
+}
+
+# roboflow: yoga-jfsy3/gingivitis-9vdad v3
+# data.yaml: gingivitis(0)
+GINGIVITIS_YOGA = {
+    0: 1,   # gingivitis -> gingivitis
+}
+
+# roboflow: skripsi-yolo11-sdj44/hypodontia-ehd5d v1
+# data.yaml: hypodontia(0)
+HYPO_SKRIPSI = {
+    0: 5,   # hypodontia -> hypodontia
+}
+
+# roboflow: skripsi-yolo11-sdj44/calculus-3yuvn v2
+# data.yaml: calculus(0)
+CALC_SKRIPSI = {
+    0: 4,   # calculus -> calculus
+}
+
+# roboflow: comsats-uuniversity-wah-campus/teeth-calculus v2
+# data.yaml: calculus(0)
+TEETH_CALC = {
+    0: 4,   # calculus -> calculus
+}
+
+# roboflow: oralytics/oralytics v1
+# data.yaml: Calculus(0), Caries(1), Gingivitis(2), Mouth Ulcer(3)
+ORALYTICS = {
+    0: 4,   # Calculus -> calculus
+    1: 0,   # Caries -> caries
+    2: 1,   # Gingivitis -> gingivitis
+    3: 3,   # Mouth Ulcer -> ulcer
+}
+
+# roboflow: seer-jtb9k/projects-2wros v1
+# data.yaml: Gingivitis(0), Mouth-Ulcer(1), Tooth-Discoloration(2)
+#            caries(3)
+PROJECTS = {
+    0: 1,   # Gingivitis -> gingivitis
+    1: 3,   # Mouth-Ulcer -> ulcer
+    2: 2,   # Tooth-Discoloration -> tooth_discoloration
+    3: 0,   # caries -> caries
+}
+
+# roboflow: pranta/oralcure_dataset v4
+# data.yaml: Caries(0), Gingivits(1), Mouth Ulcer(2),
+#            Periodontis(3)
+ORALCURE = {
+    0: 0,   # Caries -> caries
+    1: 1,   # Gingivitis -> gingivitis
+    2: 3,   # Mouth Ulcer -> ulcer
+    3: DISCARD, # Periodontis -> DISCARD
+}
+
+# roboflow: oralscan/oralscan v4
+# data.yaml: Calculus/Plaque(0), Caries(1), Fibroma(2), Gingivitis(3),
+#            Hypodontia(4), Lesion(5), Leukoplakia(6),
+#            Tooth Discoloration(7), Ulcers(8)
+ORALSCAN = {
+    0: 4,   # Calculus/Plaque -> calculus
+    1: 0,   # Caries -> caries
+    2: DISCARD, # Fibroma -> DISCARD
+    3: 1,   # Gingivitis -> gingivitis
+    4: 5,   # Hypodontia -> hypodontia
+    5: 3,   # Lesion -> ulcer
+    6: DISCARD, # Leukoplakia -> DISCARD
+    7: 2,   # Tooth Discoloration -> tooth_discoloration
+    8: 3,   # Ulcers -> ulcer
+}
+
+# roboflow: vennelakantis-workspace/smile_well v1
+# data.yaml: caries(0), gingivitis(1), hypodontia(2) missing_tooth(3),
+#            tooth_discoloration(4)
+SMILE_WELL = {
+    0: 0,   # caries -> caries
+    1: 1,   # gingivitis -> gingivitis
+    2: 5,   # hypodontia -> hypodontia
+    3: 5,   # missing_tooth -> hypodontia
+    4: 2,   # tooth_discoloration -> tooth_discoloration
+}
+
 # SOURCES dict used to map each folder name in data/sources/ to its corresponding mapping dict
 SOURCES = {
-    "oral_detector": ORAL_DETECTOR,
-    "healthy_teeth": HEALTHY_TEETH,
-    "zenodo_caries": ZENODO_CARIES,
-    "oral_diseases": ORAL_DISEASES,
-    "ulcer":         ULCER,
-    "calculus_not":  CALCULUS_NOT,
-    "calculus":      CALCULUS,
-    "hypodontia":    HYPODONTIA,
+    "oral_detector":    ORAL_DETECTOR,
+    "healthy_teeth":    HEALTHY_TEETH,
+    "zenodo_caries":    ZENODO_CARIES,
+    "oral_diseases":    ORAL_DISEASES,
+    "ulcer":            ULCER,
+    "calculus_not":     CALCULUS_NOT,
+    "calculus":         CALCULUS,
+    "hypodontia":       HYPODONTIA,
+    "gingivitis_train": GINGIVITIS_TRAIN,
+    "gingivitis_yoga":  GINGIVITIS_YOGA,
+    "hypo_skripsi":     HYPO_SKRIPSI,
+    "calc_skripsi":     CALC_SKRIPSI,
+    "teeth_calc":       TEETH_CALC,
+    "oralytics":        ORALYTICS,
+    "projects":         PROJECTS,
+    "oralcure":         ORALCURE,
+    "oralscan":         ORALSCAN,
+    "smile_well":       SMILE_WELL,
 }
 
 # path to source directory
