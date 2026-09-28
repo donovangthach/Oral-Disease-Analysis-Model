@@ -50,6 +50,27 @@ def get_dominant_class(label_path):
     return Counter(id_list).most_common(1)[0][0]                # return the most dominant class as a tuple [(class_id), (count)]
 
 
+def get_group_key(label_path):
+    """
+    Returns an ID shared by every copy of the same original photo.
+    """
+    stem = label_path.stem                                      # filename without .txt
+    key, _, _ = stem.partition(".rf.")                          # keep everything before Roboflow's copy ID
+
+    return key
+
+
+def flatten(bundles):
+    """
+    Turns a list of photo bundles into one flat list of label files.
+    """
+    files = []
+    for copies in bundles:                                      # loop through each photo's bundle
+        files.extend(copies)                                    # add every file in the bundle to the flat list
+
+    return files
+
+
 def copy_split(label_files, split):
     """
     Copies each label file and its matching image into PROCESSED_DIR/split/.
@@ -98,25 +119,29 @@ def main():
         (PROCESSED_DIR / split / "labels").mkdir(parents=True, exist_ok=True)
 
     label_files = list((MERGED_DIR / "labels").glob("*.txt"))   # put all .txt files in data/merged/labels/ in a list
-    groups = defaultdict(list)
+    photos = defaultdict(list)                                  # group key -> list of every copy of that photo
     for label_path in label_files:
-        dominant_class = get_dominant_class(label_path)         # get dominant class from label_path
+        key = get_group_key(label_path)                         # which original photo this file came from
+        photos[key].append(label_path)                          # add this copy to that photo's list
+    groups = defaultdict(list)                                  # dominant class -> list of photos (each photo is a list of copies)
+    for copies in photos.values():                              # loop through each photo's bundle of copies
+        dominant_class = get_dominant_class(copies[0])          # copies share the same labels, so checking the first is enough
         if dominant_class is None:
-            continue
+            dominant_class = "background"                       # empty label = no disease, keep it as a background negative
 
-        groups[dominant_class].append(label_path)               # append label_path with dominant_class as it's key
+        groups[dominant_class].append(copies)                   # add the whole bundle, so copies always stay together
 
     train_total = train_fails = val_total = val_fails = test_total = test_fails = 0
     for dominant_class, paths in groups.items():                # loop through each class group
-        random.shuffle(paths)                                   # shuffle the labels
+        random.shuffle(paths)                                   # shuffle whole photos (bundles of copies)
 
         n = len(paths)
         train_end = int(n * TRAIN)                              # gain index cut off for training split
         val_end = train_end + int(n * VAL)                      # gain index cut off for validation split
 
-        train = paths[:train_end]                               # split them into different lists called train, val, and test
-        val   = paths[train_end:val_end]
-        test  = paths[val_end:]
+        train = flatten(paths[:train_end])                      # slice whole photos into train/val/test, then unpack bundles into single files
+        val   = flatten(paths[train_end:val_end])
+        test  = flatten(paths[val_end:])
 
         p, m = copy_split(train, "train"); train_total += p; train_fails += m   # copy each split into the PROCESS_DIR directory and track how many pairs and mismatches there are
         p, m = copy_split(val, "val"); val_total += p; val_fails += m
