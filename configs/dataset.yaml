@@ -1,4 +1,4 @@
-path: ../data/processed
+path: data/processed
 train: train/images
 val: val/images
 test: test/images
