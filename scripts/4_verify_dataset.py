@@ -26,6 +26,7 @@ def main():
         logging.warning(f"[{PROCESSED_DIR.name}] doesn't exist. run Stage 3 first")
         return
 
+    total_invalid = 0                                           # invalid lines across ALL splits
     for split in PROCESSED_DIR.iterdir():                       # loop through each directory in data/processed/
         if not split.is_dir():                                  # skip over the .processed marker file
             continue
@@ -72,11 +73,13 @@ def main():
         logging.info(f"[{split.name}] {len(label_files)} labels | {missing_images} missing images | {invalid_lines} invalid lines")
         dist = " | ".join(f"{CLASS_NAMES[i]}: {class_counts[i]}" for i in range(len(CLASS_NAMES)))
         logging.info(f"[{split.name}] {dist}")
+        total_invalid += invalid_lines                          # add this split's count to the running total
 
-    if invalid_lines > 0:
+    if total_invalid > 0:
         logging.warning("=== Stage 4 complete, please fix the issues with the invalid lines ===")
     else:
         logging.info("=== Stage 4 complete, model is ready to train ===")
+
 
 if __name__ == "__main__":
     main()

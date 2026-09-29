@@ -72,5 +72,6 @@ def main():
 
     logging.info("=== Stage 2 complete, run Stage 3")
 
+
 if __name__ == "__main__":
     main()

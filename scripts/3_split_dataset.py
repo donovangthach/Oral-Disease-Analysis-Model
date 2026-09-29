@@ -155,5 +155,6 @@ def main():
     logging.info(f"test total: {test_total} pairs | test fails: {test_fails}")
     logging.info("=== Stage 3 complete, run Stage 4 ===")
 
+
 if __name__ == "__main__":
     main()
