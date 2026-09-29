@@ -33,10 +33,19 @@ def main():
         "recall":    results.box.mr,
     }
 
+    per_class = {}
+    for i, class_id in enumerate(results.box.ap_class_index):   # position i -> which class it belongs to
+        per_class[results.names[int(class_id)]] = {
+            "AP50":     float(results.box.ap50[i]),
+            "AP50_95":  float(results.box.ap[i]),
+        }
+    metrics["per_class"] = per_class                            # nest it inside the JSON output
+
     RESULTS_PATH.parent.mkdir(parents=True, exist_ok=True)      # create the directory
     RESULTS_PATH.write_text(json.dumps(metrics, indent=2))      # write the metric data into a file in the directory
 
     logging.info(f"Results saved to [{RESULTS_PATH}]")
+
 
 if __name__ == "__main__":
     main()
