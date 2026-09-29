@@ -15,6 +15,15 @@ CLASS_NAMES = ["caries", "gingivitis", "tooth_discoloration", "ulcer", "calculus
 IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png"}
 
 
+def get_group_key(label_path):
+    """
+    Returns an ID shared by every copy of the same original photo (matches stage 3).
+    """
+    key, _, _ = label_path.stem.partition(".rf.")                          # keep everything before Roboflow's copy ID
+
+    return key
+
+
 def main():
     """
     Loops through each split folder, checking each label file and validates each file's YOLO
@@ -27,6 +36,7 @@ def main():
         return
 
     total_invalid = 0                                           # invalid lines across ALL splits
+    split_keys = {}                                             # split name -> set of photo keys in that split
     for split in PROCESSED_DIR.iterdir():                       # loop through each directory in data/processed/
         if not split.is_dir():                                  # skip over the .processed marker file
             continue
@@ -36,8 +46,11 @@ def main():
         missing_images = 0
         invalid_lines = 0
         class_counts = Counter()
+        keys = set()                                            # unique photo keys in this split
+        background = 0                                          # label files with no boxes (healthy / negative images)
 
         for label_path in label_files:
+            keys.add(get_group_key(label_path))                 # record which photo this file came from
             image_path = None
             for ext in IMAGE_EXTENSIONS:
                 candidate = split / "images" / (label_path.stem + ext) # try to find a candidate with the IMAGE_EXTENSIONS extension
@@ -51,6 +64,8 @@ def main():
                 continue
 
             content = label_path.read_text(encoding="utf-8", errors="ignore") # get content from .txt file
+            if not content.strip():                             # empty or whitespace-only label file
+                background += 1
             lines = content.splitlines()                        # separate each line
             for line in lines:
                 parts = line.strip().split()
@@ -73,9 +88,19 @@ def main():
         logging.info(f"[{split.name}] {len(label_files)} labels | {missing_images} missing images | {invalid_lines} invalid lines")
         dist = " | ".join(f"{CLASS_NAMES[i]}: {class_counts[i]}" for i in range(len(CLASS_NAMES)))
         logging.info(f"[{split.name}] {dist}")
+        logging.info(f"[{split.name}] {len(keys)} unique photos | {background} background images")
         total_invalid += invalid_lines                          # add this split's count to the running total
+        split_keys[split.name] = keys                           # save this split's keys for the leak check
 
-    if total_invalid > 0:
+    train, val, test = split_keys["train"], split_keys["val"], split_keys["test"]
+    leaked = (train & val) | (train & test) | (val & test)  # photo keys found in more than one split
+
+    if leaked:
+        logging.warning(f"LEAK: {len(leaked)} photos appear in more than one split, e.g. {sorted(leaked)}[:5]")
+    else:
+        logging.info("No leaks: every photo is in exactly one split")
+
+    if total_invalid > 0 or leaked:
         logging.warning("=== Stage 4 complete, please fix the issues with the invalid lines ===")
     else:
         logging.info("=== Stage 4 complete, model is ready to train ===")
