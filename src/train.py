@@ -17,5 +17,6 @@ def main():
 
     model.train(data=DATASET_YAML, cfg=TRAIN_YAML)              # train the model on the dataset with the configurations set
 
+
 if __name__ == "__main__":
     main()
