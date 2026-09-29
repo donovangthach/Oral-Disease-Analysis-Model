@@ -1,7 +1,7 @@
-model: yolo11s.pt
-epochs: 100
-patience: 15          # early stopping
-batch: 16
+model: yolo11m.pt     # read by src/train.py
+epochs: 300
+patience: 50          # early stopping
+batch: 32
 imgsz: 640
 optimizer: AdamW
 lr0: 0.001
@@ -17,4 +17,4 @@ hsv_s: 0.7
 hsv_v: 0.4
 flipud: 0.1
 fliplr: 0.5
-freeze: 10
+# freeze: 10

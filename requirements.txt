@@ -3,3 +3,4 @@ torchmetrics
 onnxruntime
 pillow
 numpy
+pyyaml
