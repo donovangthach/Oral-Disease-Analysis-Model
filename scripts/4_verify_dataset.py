@@ -96,7 +96,7 @@ def main():
     leaked = (train & val) | (train & test) | (val & test)  # photo keys found in more than one split
 
     if leaked:
-        logging.warning(f"LEAK: {len(leaked)} photos appear in more than one split, e.g. {sorted(leaked)}[:5]")
+        logging.warning(f"LEAK: {len(leaked)} photos appear in more than one split, e.g. {sorted(leaked)[:5]}")
     else:
         logging.info("No leaks: every photo is in exactly one split")
 
