@@ -101,7 +101,7 @@ def main():
         logging.info("No leaks: every photo is in exactly one split")
 
     if total_invalid > 0 or leaked:
-        logging.warning("=== Stage 4 complete, please fix the issues with the invalid lines ===")
+        logging.warning("=== Stage 4 complete, please fix the issues above ===")
     else:
         logging.info("=== Stage 4 complete, model is ready to train ===")
 
