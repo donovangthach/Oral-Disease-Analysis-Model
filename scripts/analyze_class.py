@@ -4,7 +4,8 @@ Analyzes each class from their source to pinpoint good or bad data.
 
 from pathlib import Path
 import logging
-from collections import Counter
+from collections import Counter, defaultdict
+from statistics import median
 
 logging.basicConfig(level=logging.INFO, format="%(message)s")   # logging formatting
 
@@ -28,13 +29,13 @@ def get_source(label_path):
     return "unknown"
 
 
-def count_by_source(split):
+def get_boxes_by_source(split):
     """
-    Counts the CALCULUS_ID boxes in one split, grouped by the source each file came from.
+    Returns the width and height of every CALCULUS_ID box in one split, grouped by source.
     """
     label_files = list((PROCESSED_DIR / split / "labels").glob("*.txt"))    # glob all .txt files in the split/labels/ directory
 
-    counts = Counter()                                          # source name -> number of calculus boxes
+    boxes = defaultdict(list)                                   # source name -> list of (width, height)
     for label_path in label_files:
         content = label_path.read_text(encoding="utf-8", errors="ignore")   # get content from .txt file
         lines = content.splitlines()                            # separate each line
@@ -45,9 +46,21 @@ def count_by_source(split):
 
             class_id = int(parts[0])
             if class_id == CALCULUS_ID:
-                counts[get_source(label_path)] += 1             # add one more box to this file's source
+                width, height = float(parts[3]), float(parts[4])    # YOLO line: class x_center y_center width height
+                boxes[get_source(label_path)].append((width, height))   # add this box to its source's list
 
-    return counts
+    return boxes
+
+
+def log_box_stats(split, boxes):
+    """
+    Logs the median width, height, and area of the boxes from each source.
+    """
+    for source, source_boxes in boxes.items():                  # loop through each source and its list of boxes
+        widths = [w for w, h in source_boxes]                   # keep only width of each (width, height)
+        heights = [h for w, h in source_boxes]                  # keep only the height
+        areas = [w * h for w, h in source_boxes]                # fraction of the image each box covers
+        logging.info(f"[{split}] {source}: median w {median(widths):.3f} | h {median(heights):.3f} | area {median(areas):.4f}")
 
 
 def main():
@@ -57,10 +70,12 @@ def main():
     logging.info("=== Calculus boxes per source ===")
 
     for split in ("train", "val", "test"):                      # loop through each split
-        counts = count_by_source(split)                         # source name -> number of calculus boxes
+        boxes = get_boxes_by_source(split)                      # source name -> list of (width, height)
+        counts = Counter({source: len(source_boxes) for source, source_boxes in boxes.items()}) # source name -> number of calculus boxes
         total = sum(counts.values())                            # all calculus boxes in this split
         dist = " | ".join(f"{source}: {n} ({n / total:.0%})" for source, n in counts.most_common())
         logging.info(f"[{split}] {total} boxes | {dist}")
+        log_box_stats(split, boxes)                             # log median box sizes for each source
 
 
 if __name__ == "__main__":
