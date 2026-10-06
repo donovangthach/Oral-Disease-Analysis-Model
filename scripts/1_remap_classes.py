@@ -33,7 +33,7 @@ ORAL_DETECTOR = {
     1: 0,   # caries -> caries
     2: 1,   # gingivitis -> gingivitis
     3: 3,   # lessions -> ulcer
-    4: 4,   # plaque -> calculus
+    4: DISCARD, # plaque -> DISCARD
     5: 2,   # tooth discoloration -> tooth_discoloration
     6: 3,   # ulcer -> ulcer
     7: 3,   # xerostomia -> ulcer
