@@ -6,18 +6,23 @@ balance across splits.
 
 Writes final images and labels into data/processed/ and deletes data/merged/ afterward to save
 storage and space (mostly for the Oregon State HPC space quota).
+
+Photos listed in configs/split_manifest.json keep their saved split, so the test set stays locked 
+across experiments. Only new photos are split, and they are added to the manifest.
 """
 
 from pathlib import Path
 import logging
 import shutil
 import random
+import json
 from collections import Counter, defaultdict
 
 logging.basicConfig(level=logging.INFO, format="%(message)s")   # logging formatting
 
 MERGED_DIR = Path("data") / "merged"
 PROCESSED_DIR = Path("data") / "processed"
+MANIFEST_PATH = Path("configs") / "split_manifest.json"
 
 IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png"}
 
@@ -58,6 +63,17 @@ def get_group_key(label_path):
     key, _, _ = stem.partition(".rf.")                          # keep everything before Roboflow's copy ID
 
     return key
+
+
+def load_manifest():
+    """
+    Returns the svaed photo key -> split dict, or an empty dict if there is no manifest yet.
+    """
+    if not MANIFEST_PATH.exists():                              # no manifest yet, so every photo is new
+        logging.warning(f"[{MANIFEST_PATH}] not found, every photo will be split from scratch")
+        return {}
+
+    return json.loads(MANIFEST_PATH.read_text())
 
 
 def flatten(bundles):
@@ -123,16 +139,30 @@ def main():
     for label_path in label_files:
         key = get_group_key(label_path)                         # which original photo this file came from
         photos[key].append(label_path)                          # add this copy to that photo's list
+
+    manifest = load_manifest()                                  # photo key -> saved split ("train", "val", or "test")
+    locked = defaultdict(list)                                  # split name -> label files of photos already in the manifest
     groups = defaultdict(list)                                  # dominant class -> list of photos (each photo is a list of copies)
-    for copies in photos.values():                              # loop through each photo's bundle of copies
+    for key, copies in photos.items():                          # loop through each photo key and its bundle of copies
+        if key in manifest:                                     # photo was split before, so keep its saved split
+            locked[manifest[key]].extend(copies)                # add every copy, so copies always stay together
+            continue
+        
         dominant_class = get_dominant_class(copies[0])          # copies share the same labels, so checking the first is enough
         if dominant_class is None:
             dominant_class = "background"                       # empty label = no disease, keep it as a background negative
 
         groups[dominant_class].append(copies)                   # add the whole bundle, so copies always stay together
 
+    new_photos = sum(len(bundles) for bundles in groups.values())   # photos that are not in the manifest
+    logging.info(f"{len(photos) - new_photos} photos locked by the manifest | {new_photos} new photos to split")
+
     train_total = train_fails = val_total = val_fails = test_total = test_fails = 0
-    for dominant_class, paths in groups.items():                # loop through each class group
+    p, m = copy_split(locked["train"], "train"); train_total += p; train_fails += m # copy locked photos into their saved split
+    p, m = copy_split(locked["val"], "val");val_total += p; val_fails += m
+    p, m = copy_split(locked["test"], "test"); test_total += p; test_fails += m
+
+    for dominant_class, paths in groups.items():                # loop through each class group (new photos only)
         random.shuffle(paths)                                   # shuffle whole photos (bundles of copies)
 
         n = len(paths)
@@ -147,8 +177,17 @@ def main():
         p, m = copy_split(val, "val"); val_total += p; val_fails += m
         p, m = copy_split(test, "test"); test_total += p; test_fails += m
 
-    shutil.rmtree(MERGED_DIR)                                    # delete MERGED_DIR
-    (PROCESSED_DIR / ".processed").write_text("")                # make .processed marker file in PROCESSED_DIR
+        new_splits = {"train": train, "val": val, "test": test} # split name -> new label files just copied there
+        for split, files in new_splits.items():                 # record each new photo's split in the manifest
+            for label_path in files:
+                manifest[get_group_key(label_path)] = split     # copies share a key, so each photo is stored once
+
+    if new_photos:                                              # only rewrite the manifest when it actually changed
+        MANIFEST_PATH.write_text(json.dumps(manifest, indent=2, sort_keys=True))    # same format as save_split_manifest.py
+        logging.info(f"{new_photos} new photos added to [{MANIFEST_PATH}], commit it to git")
+
+    shutil.rmtree(MERGED_DIR)                                   # delete MERGED_DIR
+    (PROCESSED_DIR / ".processed").write_text("")               # make .processed marker file in PROCESSED_DIR
 
     logging.info(f"train total: {train_total} pairs | train fails: {train_fails}")
     logging.info(f"val total: {val_total} pairs | val fails: {val_fails}")
