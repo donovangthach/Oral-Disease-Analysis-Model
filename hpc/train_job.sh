@@ -2,8 +2,8 @@
 #SBATCH --job-name=odam_train
 #SBATCH --partition=gpu
 #SBATCH --gres=gpu:1
-#SBATCH --cpus-per-task=4
-#SBATCH --mem=16G
+#SBATCH --cpus-per-task=8
+#SBATCH --mem=32G
 #SBATCH --time=20:00:00
 #SBATCH --output=logs/slurm_train_%j.txt
 #SBATCH --error=logs/slurm_train_err_%j.txt
