@@ -40,3 +40,18 @@ Calculus AP swings by about 20 points between val and test, which suggests incon
 
 Notes: no measurable effect. Calculus went +0.026 on val but -0.024 on test (opposite directions), and hypodontia moved -0.030 with no data change, so one-run noise is about +/-0.03 AP50 for the small classes.
 Kept plaque as DISCARD because those labels were visibly wrong (boxes on plaque, real tartar unlabeled). This run is the new reference for future experiments.
+
+## Known limitation: calculus labels (2026-10-22)
+- Finding: calculus is weak because of its data, not a pipeline bug (checked with `scripts/analyze_class.py`)
+- Data: only ~233 unique train photos with calculus (Roboflow copies inflate the box count); test has 56
+- Labels: one box per affected tooth, but many teeth with visible tartar have no box (e.g. test photo `calculus_-1000-`: tartar on most teeth, 3 boxes)
+- Test labels have the same gaps, so calculus test AP is unreliable: correct predictions on unlabeled tartar count as false positives, which lowers precision
+
+| Model | Test mAP50 (6 classes) | Test mAP50 (5, no calculus) | Test mAP50-95 (6 classes) | Test mAP50-95 (5, no calculus) |
+|---|---|---|---|---|
+| Baseline (`train`) | 0.674 | 0.726 | 0.420 | 0.478 |
+| Experiment (a) (`train-3`) | 0.666 | 0.721 | 0.416 | 0.474 |
+
+Notes: the 5-class numbers are the mean of the other 5 per-class test APs in the tables above (Ultralytics mAP is a plain mean over classes; averaging all 6 rounded values reproduces the reported 6-class numbers).
+Relabeling the 56 test calculus photos by hand was planned (experiment (b), `scripts/export_for_relabel.py`) but cancelled: without dental expertise, new labels could add their own errors. Fixing calculus needs expert-annotated data.
+Decision: `train-3` stays the reference, but accuracy is not good enough to deploy yet. Next: re-add the removed sources one at a time (audited, new photos to train/val only so the test set stays locked), compared on the 5-class mAP since calculus test AP is unreliable.
