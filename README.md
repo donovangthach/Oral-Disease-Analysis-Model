@@ -31,10 +31,11 @@ Model: YOLO11m, 300 epochs, evaluated on the locked test split (1,614 images).
 | Calculus | 0.395 |
 | Hypodontia | 0.532 |
 | **All (mAP50)** | **0.666** |
+| All except Calculus (mAP50) | 0.721 |
 
 Calculus is the weak class. Its labels are incomplete (one box per affected tooth, with many affected
 teeth left unlabeled), and it has only about 233 unique training photos. The test set's calculus labels
-are currently being relabeled by hand so the score can be trusted.
+have the same gaps, so its score is unreliable. Fixing it needs expert-annotated data (see RESULTS.md).
 
 ## Project Structure
 
