@@ -3,6 +3,7 @@ epochs: 300
 patience: 50          # early stopping
 batch: 32
 imgsz: 640
+seed: 1               # default 0; 1 only for the noise-check run
 optimizer: AdamW
 lr0: 0.001
 lrf: 0.01             # final LR = lr0 * lrf
