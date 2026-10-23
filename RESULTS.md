@@ -54,4 +54,4 @@ Kept plaque as DISCARD because those labels were visibly wrong (boxes on plaque,
 
 Notes: the 5-class numbers are the mean of the other 5 per-class test APs in the tables above (Ultralytics mAP is a plain mean over classes; averaging all 6 rounded values reproduces the reported 6-class numbers).
 Relabeling the 56 test calculus photos by hand was planned (experiment (b), `scripts/export_for_relabel.py`) but cancelled: without dental expertise, new labels could add their own errors. Fixing calculus needs expert-annotated data.
-Decision: `train-3` stays the reference, but accuracy is not good enough to deploy yet. Next: re-add the removed sources one at a time (audited, new photos to train/val only so the test set stays locked), compared on the 5-class mAP since calculus test AP is unreliable.
+Decision: `train-3` stays the reference, but accuracy is not good enough to deploy yet. Next: re-add the removed sources one at a time (audited, new photos to train only so val and test stay locked), compared on the 5-class mAP since calculus test AP is unreliable.
