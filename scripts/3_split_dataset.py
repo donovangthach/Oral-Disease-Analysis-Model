@@ -7,8 +7,9 @@ balance across splits.
 Writes final images and labels into data/processed/ and deletes data/merged/ afterward to save
 storage and space (mostly for the Oregon State HPC space quota).
 
-Photos listed in configs/split_manifest.json keep their saved split, so the test set stays locked 
-across experiments. Only new photos are split, and they are added to the manifest.
+Photos listed in configs/split_manifest.json keep their saved split, so val and test stay locked
+across experiments. New photos all go to train and are added to the manifest. Without a manifest,
+every photo is split 70/15/15 instead.
 """
 
 from pathlib import Path
@@ -172,6 +173,11 @@ def main():
         train = flatten(paths[:train_end])                      # slice whole photos into train/val/test, then unpack bundles into single files
         val   = flatten(paths[train_end:val_end])
         test  = flatten(paths[val_end:])
+
+        if manifest:                                            # val and test are locked, so every new photo goes to train
+            train = flatten(paths)
+            val = []
+            test = []
 
         p, m = copy_split(train, "train"); train_total += p; train_fails += m   # copy each split into the PROCESS_DIR directory and track how many pairs and mismatches there are
         p, m = copy_split(val, "val"); val_total += p; val_fails += m
