@@ -55,3 +55,28 @@ Kept plaque as DISCARD because those labels were visibly wrong (boxes on plaque,
 Notes: the 5-class numbers are the mean of the other 5 per-class test APs in the tables above (Ultralytics mAP is a plain mean over classes; averaging all 6 rounded values reproduces the reported 6-class numbers).
 Relabeling the 56 test calculus photos by hand was planned (experiment (b), `scripts/export_for_relabel.py`) but cancelled: without dental expertise, new labels could add their own errors. Fixing calculus needs expert-annotated data.
 Decision: `train-3` stays the reference, but accuracy is not good enough to deploy yet. Next: re-add the removed sources one at a time (audited, new photos to train only so val and test stay locked), compared on the 5-class mAP since calculus test AP is unreliable.
+
+## Noise check: seed 1 (2026-10-23)
+- Change: only `seed: 1` in `train.yaml` (every earlier run used Ultralytics' default seed 0)
+- Run: `runs/detect/train-4` (HPC), train job 21905788; a measurement only, not promoted and not evaluated on test
+- Data and config: same as experiment (a)
+
+| Class | Val AP50 train-3 (seed 0) | Val AP50 train-4 (seed 1) | Difference |
+|---|---|---|---|
+| caries | 0.864 | 0.855 | -0.009 |
+| gingivitis | 0.785 | 0.782 | -0.003 |
+| tooth_discoloration | 0.717 | 0.680 | -0.037 |
+| ulcer | 0.822 | 0.846 | +0.024 |
+| calculus | 0.240 | 0.226 | -0.014 |
+| hypodontia | 0.617 | 0.658 | +0.041 |
+| **all (6 classes)** | **0.674** | **0.675** | **+0.001** |
+| all except calculus | 0.761 | 0.764 | +0.003 |
+
+Notes: with no data change, single classes moved by up to 0.04 AP50, but the 5-class mean moved only 0.003. So per-class differences under ~0.04 are noise, and the 5-class mean is the number to compare experiments on.
+Val turned out to share photos with train (next section), so these values are inflated, but the seed-to-seed gap should be similar.
+
+## Cross-source duplicates found (2026-10-23)
+- Check: `scripts/find_duplicates.py` (perceptual hash of each image and its mirror; same photo = at most 4 of 64 bits different, cutoff checked by eye)
+- Finding: 319 of 928 test photos (34%) have a near-identical copy in train under another source or file name. Main cause: `calculus_not` and `oral_detector` share most of their photos, and `calculus` overlaps with both. Stage 4's leak check compares photo keys, which include the source name, so it could not see this.
+- Impact: every test number above (baseline, experiment (a), and the 5-class means) is inflated.
+- Fix: the 788 train photos that duplicate a val or test photo are listed in `configs/duplicate_train_photos.json`, and Stage 3 leaves them out of train. Val and test images are unchanged. A clean baseline will be retrained and becomes the new reference.
