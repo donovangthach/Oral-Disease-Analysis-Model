@@ -70,7 +70,7 @@ def main():
 
     (MERGED_DIR / ".merged").write_text("")                     # create a .merged file to prevent remerging
 
-    logging.info("=== Stage 2 complete, run Stage 3")
+    logging.info("=== Stage 2 complete, run Stage 3 ===")
 
 
 if __name__ == "__main__":
