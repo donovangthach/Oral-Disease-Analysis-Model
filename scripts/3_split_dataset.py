@@ -24,6 +24,7 @@ logging.basicConfig(level=logging.INFO, format="%(message)s")   # logging format
 MERGED_DIR = Path("data") / "merged"
 PROCESSED_DIR = Path("data") / "processed"
 MANIFEST_PATH = Path("configs") / "split_manifest.json"
+DUPLICATES_PATH = Path("configs") / "duplicate_train_photos.json"
 
 IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png"}
 
@@ -75,6 +76,18 @@ def load_manifest():
         return {}
 
     return json.loads(MANIFEST_PATH.read_text())
+
+
+def load_duplicates():
+    """
+    Returns the train photo keys that duplicate a val or test photo, or an empty dict if there is 
+    no list.
+    """
+    if not DUPLICATES_PATH.exists():                            # no list yet, so nothing is left out
+        logging.warning(f"[{DUPLICATES_PATH}] not found, no duplicate photos will be left out of train")
+        return {}
+
+    return json.loads(DUPLICATES_PATH.read_text())
 
 
 def flatten(bundles):
@@ -142,9 +155,15 @@ def main():
         photos[key].append(label_path)                          # add this copy to that photo's list
 
     manifest = load_manifest()                                  # photo key -> saved split ("train", "val", or "test")
+    duplicates = load_duplicates()                              # train photo keys to leave out (same photo as a val/test photo)
+    left_out = 0
     locked = defaultdict(list)                                  # split name -> label files of photos already in the manifest
     groups = defaultdict(list)                                  # dominant class -> list of photos (each photo is a list of copies)
     for key, copies in photos.items():                          # loop through each photo key and its bundle of copies
+        if key in duplicates:                                   # leave every copy of this photo out of train
+            left_out += 1
+            continue
+
         if key in manifest:                                     # photo was split before, so keep its saved split
             locked[manifest[key]].extend(copies)                # add every copy, so copies always stay together
             continue
@@ -156,7 +175,8 @@ def main():
         groups[dominant_class].append(copies)                   # add the whole bundle, so copies always stay together
 
     new_photos = sum(len(bundles) for bundles in groups.values())   # photos that are not in the manifest
-    logging.info(f"{len(photos) - new_photos} photos locked by the manifest | {new_photos} new photos to split")
+    logging.info(f"{len(photos) - new_photos - left_out} photos locked by the manifest | {new_photos} new photos to split")
+    logging.info(f"{left_out} duplicate photos left out of train")
 
     train_total = train_fails = val_total = val_fails = test_total = test_fails = 0
     p, m = copy_split(locked["train"], "train"); train_total += p; train_fails += m # copy locked photos into their saved split
