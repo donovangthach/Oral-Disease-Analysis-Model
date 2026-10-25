@@ -1,7 +1,8 @@
 # Oral Disease Detection Model (v2)
 
 Object detection model for identifying 6 oral disease classes from clinical photographs.
-Built on YOLO11 (Ultralytics) with a multi-source dataset pipeline and a locked, leak-free test split.
+Built on YOLO11 (Ultralytics) with a multi-source dataset pipeline and a locked test split that is checked
+for duplicate photos.
 See [ARCHITECTURE.md](ARCHITECTURE.md) for design decisions and [RESULTS.md](RESULTS.md) for every
 experiment's results.
 
@@ -20,20 +21,26 @@ Plaque is not a class. Plaque boxes from the Oral Detector source are discarded 
 
 ## Current Results
 
-Model: YOLO11m, 300 epochs, evaluated on the locked test split (1,614 images).
+Model: YOLO11m (`train-5`), early-stopped at epoch 136 (best epoch 86), evaluated on the locked test split
+(1,614 images).
 
 | Class | Test AP50 |
 |---|---|
-| Caries | 0.857 |
-| Gingivitis | 0.748 |
-| Tooth Discoloration | 0.635 |
-| Ulcer | 0.832 |
-| Calculus | 0.395 |
-| Hypodontia | 0.532 |
-| **All (mAP50)** | **0.666** |
-| All except Calculus (mAP50) | 0.721 |
+| Caries | 0.649 |
+| Gingivitis | 0.124 |
+| Tooth Discoloration | 0.350 |
+| Ulcer | 0.568 |
+| Calculus | 0.350 |
+| Hypodontia | 0.538 |
+| **All (mAP50)** | **0.430** |
+| All except Calculus (mAP50) | 0.446 |
 
-Calculus is the weak class. Its labels are incomplete (one box per affected tooth, with many affected
+These are the first honest numbers. Earlier runs scored 0.666, but about a third of the test photos had a
+near-identical copy in train under another source's name, so those scores were inflated. The copies are now
+left out of train (see RESULTS.md, "Cross-source duplicates found"). The model is not good enough to deploy yet;
+the next step is adding more data, especially for gingivitis and tooth discoloration.
+
+Calculus is also weak for another reason. Its labels are incomplete (one box per affected tooth, with many affected
 teeth left unlabeled), and it has only about 233 unique training photos. The test set's calculus labels
 have the same gaps, so its score is unreliable. Fixing it needs expert-annotated data (see RESULTS.md).
 
@@ -45,13 +52,15 @@ have the same gaps, so its score is unreliable. Fixing it needs expert-annotated
 ├── configs/
 │   ├── dataset.yaml             # Class names and data paths
 │   ├── train.yaml               # Model and training hyperparameters
-│   └── split_manifest.json      # Photo -> split assignment that locks the test set
+│   ├── split_manifest.json      # Photo -> split assignment that locks the test set
+│   └── duplicate_train_photos.json  # Train photos that duplicate a val/test photo (left out of train)
 ├── scripts/                     # Data pipeline (run 1-4 in order) and analysis tools
 │   ├── 1_remap_classes.py       # Remap each source's class IDs to the 6 canonical classes
 │   ├── 2_merge_datasets.py      # Merge all sources into one flat folder
 │   ├── 3_split_dataset.py       # Grouped, stratified 70/15/15 split that follows the manifest
 │   ├── 4_verify_dataset.py      # Format check, class counts, backgrounds, leak check
 │   ├── save_split_manifest.py   # One-time: save the current split to the manifest
+│   ├── find_duplicates.py       # One-time: find train photos that duplicate val/test (perceptual hash)
 │   ├── analyze_class.py         # Calculus label analysis (per-source counts, box sizes, samples)
 │   └── export_for_relabel.py    # Export test calculus photos for relabeling in CVAT
 ├── src/
@@ -94,7 +103,9 @@ The output is `data/processed/{train,val,test}/{images,labels}`.
 - **Grouped by photo.** Roboflow exports several augmented copies of each photo (`<name>.rf.<hash>`).
   All copies of a photo go to the same split, so copies can't leak from train into test.
 - **Locked.** Stage 3 puts every photo listed in `configs/split_manifest.json` back in its saved split,
-  so the test set stays the same across experiments. Only new photos are split (and added to the manifest).
+  so the test set stays the same across experiments. New photos go to train only, so val and test never change.
+- **Duplicates left out.** Some sources share photos under different names. Train photos that look nearly
+  identical to a val or test photo (listed in `configs/duplicate_train_photos.json`) are left out of train.
 - **Background images are kept.** Images with no boxes (e.g. healthy teeth) stay in the dataset as negatives.
 
 ### 2. Train

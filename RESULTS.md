@@ -80,3 +80,27 @@ Val turned out to share photos with train (next section), so these values are in
 - Finding: 319 of 928 test photos (34%) have a near-identical copy in train under another source or file name. Main cause: `calculus_not` and `oral_detector` share most of their photos, and `calculus` overlaps with both. Stage 4's leak check compares photo keys, which include the source name, so it could not see this.
 - Impact: every test number above (baseline, experiment (a), and the 5-class means) is inflated.
 - Fix: the 788 train photos that duplicate a val or test photo are listed in `configs/duplicate_train_photos.json`, and Stage 3 leaves them out of train. Val and test images are unchanged. A clean baseline will be retrained and becomes the new reference.
+
+## Clean baseline: duplicates removed (2026-10-24)
+- Change: the 788 duplicate photos listed in `configs/duplicate_train_photos.json` left out of train (Stage 3); val and test images byte-identical to before (md5-checked)
+- Run: `runs/detect/train-5` (HPC), train job 21916990, eval job 21923802; `models/best.pt` md5 `43023753c22cbeeb5d45cb17b84b814c`
+- Config: same as experiment (a), seed 0. Early-stopped at epoch 136 (patience 50), best epoch 86, 2.6 h
+- Data: 3,508 unique train photos (5,661 files), was 4,296 photos (7,656 files); val 917 and test 928 photos unchanged
+
+| Class | Val AP50 | Test AP50 | Test AP50-95 | Test AP50 train-3 (inflated) | Difference |
+|---|---|---|---|---|---|
+| caries | 0.633 | 0.649 | 0.373 | 0.857 | -0.208 |
+| gingivitis | 0.161 | 0.124 | 0.035 | 0.748 | -0.624 |
+| tooth_discoloration | 0.249 | 0.350 | 0.158 | 0.635 | -0.285 |
+| ulcer | 0.556 | 0.568 | 0.246 | 0.832 | -0.264 |
+| calculus | 0.244 | 0.350 | 0.106 | 0.395 | -0.045 |
+| hypodontia | 0.653 | 0.538 | 0.353 | 0.532 | +0.006 |
+| **all (6 classes)** | **0.416** | **0.430** | **0.212** | **0.666** | **-0.236** |
+| all except calculus | 0.450 | 0.446 | 0.233 | 0.721 | -0.275 |
+
+Notes: the drop follows the duplicates. Gingivitis, tooth discoloration, caries and ulcer come mostly from `calculus_not` and `oral_detector`, which held most of the removed photos, and they fell 0.2-0.6. Hypodontia and calculus come mostly from other sources and barely moved. So most of the old scores came from recognizing near-copies of training photos, not from detecting disease in new photos.
+The early stop did not cause the drop: train-3's val mAP50 at epoch 86 was already 0.671 (final 0.674). Val loss stayed far above train loss (box 2.19 vs 0.96, cls 2.04 vs 0.70 at the last epoch), so the model overfits the remaining train photos.
+Gingivitis has only 399 train boxes left (val has 385), which explains its near-zero AP.
+The duplicate cutoff (4 of 64 bits) is strict on purpose; some real copies at distances 5-8 (non-zenodo) are still in train, so these numbers may still be slightly optimistic.
+The seed noise estimate (previous sections) was measured on the leaky data and should be rechecked on this setup.
+Decision: `train-5` is the new reference (test 0.430 / 0.446 without calculus). Not deployable. Next: re-add the removed sources one at a time, with a duplicate check against val and test for each, prioritizing gingivitis and tooth discoloration data.
