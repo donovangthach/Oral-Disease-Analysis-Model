@@ -8,14 +8,14 @@ here should be reflected in code as it is written.
 
 ---
 
-## 1. Model — YOLOv11 (Ultralytics)
+## 1. Model — Ultralytics YOLO11
 
-**Choice:** YOLOv11n / YOLOv11s (start small, scale up if needed)
+**Choice:** YOLO11n / YOLO11s (start small, scale up if needed)
 
-**Why YOLOv11 over Faster R-CNN (v1):**
+**Why YOLO11 over Faster R-CNN (v1):**
 - Pretrained on COCO — strong general visual features out of the box
 - Native YOLO-format support matches our Roboflow data sources directly
-- Built-in augmentations: Mosaic, Mixup, copy-paste, HSV jitter, flips — no custom code needed
+- Built-in augmentations: Mosaic, MixUp, Copy-paste, HSV jitter, flips — no custom code needed
 - Single-file ONNX export for web deployment
 - Significantly faster inference (~10ms vs ~100ms per image)
 
@@ -149,11 +149,11 @@ fliplr: 0.5
 
 Key decisions:
 - Freeze backbone for first 10 epochs, then unfreeze (fine-tuning via transfer learning)
-- Validate every epoch; save best checkpoint by `mAP@50:95`
+- Validate every epoch; save best checkpoint by `mAP50-95` (Ultralytics' fitness)
 - Use AdamW (not SGD) — better convergence for fine-tuning transformers and modern CNNs
 - Early stopping with patience=15
 
-**HPC:** `hpc/train_job.sh` — configured for Oregon State SLURM with GPU partition
+**HPC:** `hpc/train_job.sh` — configured for Oregon State Slurm with GPU partition
 
 ---
 
@@ -161,9 +161,9 @@ Key decisions:
 
 **Script:** `src/evaluate.py`
 
-Metrics (via `torchmetrics.detection.MeanAveragePrecision`):
-- `mAP@50` — primary metric for detection quality
-- `mAP@50:95` — COCO standard, stricter
+Metrics (via Ultralytics `model.val(split="test")`):
+- `mAP50` — primary metric for detection quality
+- `mAP50-95` — COCO standard, stricter
 - Per-class AP for all 6 classes
 - Precision / Recall per class
 
@@ -223,6 +223,6 @@ Hosting options (in order of preference):
 - `NUM_CLASSES = 20` with 6 actual classes → set `nc: 6` exactly
 - Random (non-stratified) splits → fixed in Stage 3
 - Implicit class ID trust from source files → fixed in Stage 1
-- Custom mAP implementation with bugs → replaced with `torchmetrics`
+- Custom mAP implementation with bugs → replaced with Ultralytics' built-in validation (`model.val`)
 - `venv/` tracked in git → covered by `.gitignore`
 - `requirements.txt` encoding corruption → rewritten
