@@ -1,7 +1,7 @@
 # Oral Disease Detection Model (v2)
 
 Object detection model for identifying 6 oral disease classes from clinical photographs.
-Built on YOLO11 (Ultralytics) with a multi-source dataset pipeline and a locked test split that is checked
+Built on Ultralytics YOLO11 with a multi-source dataset pipeline and a locked test split that is checked
 for duplicate photos.
 See [ARCHITECTURE.md](ARCHITECTURE.md) for design decisions and [RESULTS.md](RESULTS.md) for every
 experiment's results.
@@ -68,7 +68,7 @@ have the same gaps, so its score is unreliable. Fixing it needs expert-annotated
 │   ├── evaluate.py
 │   ├── infer.py
 │   └── export.py
-└── hpc/                         # Oregon State SLURM job scripts
+└── hpc/                         # Oregon State Slurm job scripts
     ├── train_job.sh
     └── eval_job.sh
 ```
